@@ -116,3 +116,75 @@ class Airports:
             print(f"Inserted/updated {len(rows)} airports into `airports`.")
         finally:
             conn.close()
+            
+    def add_columns(db_parameters):
+        conn = Database.get_connection(db_parameters)
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    ALTER TABLE airports
+                    ADD COLUMN IF NOT EXISTS inbound_count  INTEGER DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS outbound_count INTEGER DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS total_in_out   INTEGER DEFAULT 0;
+                """)
+
+            conn.commit()
+            print("Columns added successfully!")
+
+        finally:
+            conn.close()
+
+            
+    def calculate_flights_per_airport(db_parameters):
+        conn = Database.get_connection(db_parameters)
+        try:
+            with conn.cursor() as cur:
+                #  reset so airports with no routes are 0
+                cur.execute("""
+                    UPDATE airports
+                    SET inbound_count = 0,
+                        outbound_count = 0,
+                        total_in_out = 0;
+                """)
+
+                # Outbound update (by source_airport_id)
+                cur.execute("""
+                    UPDATE airports a
+                    SET outbound_count = sub.out_count
+                    FROM (
+                        SELECT source_airport_id AS airport_id, COUNT(*) AS out_count
+                        FROM airline_routes
+                        WHERE source_airport_id IS NOT NULL
+                        GROUP BY source_airport_id
+                    ) sub
+                    WHERE a.airport_id = sub.airport_id;
+                """)
+
+                # Inbound update (by destination_airport_id AKA dest_airport_id)
+                cur.execute("""
+                    UPDATE airports a
+                    SET inbound_count = sub.in_count
+                    FROM (
+                        SELECT dest_airport_id AS airport_id, COUNT(*) AS in_count
+                        FROM airline_routes
+                        WHERE dest_airport_id IS NOT NULL
+                        GROUP BY dest_airport_id
+                    ) sub
+                    WHERE a.airport_id = sub.airport_id;
+                """)
+
+                # Total update
+                cur.execute("""
+                    UPDATE airports
+                    SET total_in_out = COALESCE(inbound_count, 0) + COALESCE(outbound_count, 0);
+                """)
+
+            conn.commit()
+            print("Airport counts updated successfully!")
+        finally:
+            conn.close()
+
+
+
+            
