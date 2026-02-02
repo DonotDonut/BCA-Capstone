@@ -36,4 +36,18 @@ db_parameters = {
     )
 '''
 #Airports.add_columns(db_parameters)
-Airports.calculate_flights_per_airport(db_parameters)
+#Airports.calculate_flights_per_airport(db_parameters)
+Report.get_airlines_using_top10_airports(db_parameters)
+
+''' access to top 10 airports, considered as strategic hubs 
+China Southern Airlines 5/10 , 
+China Eastern Airlines 7/10 
+Air China   8/10 
+Shenzhen Airlines 1/10 
+Turkish Airlines 9/10 
+All Nippon Airways 8/10 
+Hainan Airlines 4/10 
+Sichuan Airlines 1/10
+Air India Limited 6/10 
+Xiamen Airlines 1/10 
+'''
