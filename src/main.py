@@ -37,7 +37,8 @@ db_parameters = {
 '''
 #Airports.add_columns(db_parameters)
 #Airports.calculate_flights_per_airport(db_parameters)
-Report.get_airlines_using_top10_airports(db_parameters)
+#Report.get_airlines_using_top10_airports(db_parameters)
+Report.get_airlines_unique_airport_counts(db_parameters)
 
 ''' access to top 10 airports, considered as strategic hubs 
 China Southern Airlines 5/10 , 

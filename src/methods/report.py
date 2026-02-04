@@ -232,3 +232,56 @@ class Report:
 
       finally:
           conn.close()
+          
+  def get_airlines_unique_airport_counts(db_parameters):
+        conn = Database.get_connection(db_parameters)
+
+        sql = """
+        WITH airline_airports AS (
+
+            -- Airports an airline DEPARTS from
+            SELECT
+                airline_id,
+                source_airport_id AS airport_id
+            FROM airline_routes
+            WHERE airline_id IS NOT NULL
+
+            UNION
+
+            -- Airports an airline ARRIVES at
+            SELECT
+                airline_id,
+                dest_airport_id AS airport_id
+            FROM airline_routes
+            WHERE airline_id IS NOT NULL
+        ),
+
+        airline_unique_counts AS (
+            SELECT
+                airline_id,
+                COUNT(DISTINCT airport_id) AS unique_airports_touched
+            FROM airline_airports
+            GROUP BY airline_id
+        )
+
+        SELECT
+            al.airline_id,
+            al.name AS airline_name,
+            al.iata AS airline_iata,
+            al.icao AS airline_icao,
+            auc.unique_airports_touched
+        FROM airline_unique_counts auc
+        LEFT JOIN airlines al ON al.airline_id = auc.airline_id
+        ORDER BY unique_airports_touched DESC, airline_name;
+        """
+
+        excel_path = "output data/airlines_unique_airports_report.xlsx"
+
+        try:
+            df = pd.read_sql(sql, conn)
+            df.to_excel(excel_path, index=False)
+
+            Report.apply_airline_highlights(excel_path)
+
+        finally:
+            conn.close()
